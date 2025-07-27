@@ -1,28 +1,37 @@
 from rest_framework import serializers
-from .models import Listing, Booking
-from django.contrib.auth import get_user_model
+from .models import Listing, Booking, Review
 
-User = get_user_model()
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email']
-
-class ListingSerializer(serializers.ModelSerializer):
-    owner = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Listing
-        fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at']
 
 class BookingSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    listing = ListingSerializer(read_only=True)
+    guest_name = serializers.CharField(max_length=100)
 
     class Meta:
         model = Booking
         fields = '__all__'
-        read_only_fields = ['total_price', 'created_at', 'updated_at']
-__all__ = ['UserSerializer', 'ListingSerializer', 'BookingSerializer']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    reviewer_name = serializers.CharField(max_length=100)
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class ListingSerializer(serializers.ModelSerializer):
+    bookings = BookingSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
+    price_per_night = serializers.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        model = Listing
+        fields = [
+            'id',
+            'title',
+            'description',
+            'location',
+            'price_per_night',
+            'created_at',
+            'bookings',
+            'reviews',
+        ]
